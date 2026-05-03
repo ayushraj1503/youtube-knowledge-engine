@@ -229,6 +229,12 @@ class RetrievalService:
                 key = doc["metadata"].get("video_id", "") + "_" + str(
                     doc["metadata"].get("chunk_index", rank)
                 )
+
+                # Tried weighted score combination first
+                # but BM25 scores (0-15) and cosine (0-1) 
+                # are on completely different scales
+                # RRF with rank positions solved this cleanly
+
                 rrf_scores[key] += weight / (k + rank + 1)
                 doc_store[key] = doc
 

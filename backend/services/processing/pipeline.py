@@ -190,6 +190,10 @@ class ProcessingPipeline:
         i = 0
         chunk_index = 0
 
+# Note: I tried token-based chunking with tiktoken first
+# but word-based is more predictable for retrieval
+# and all-MiniLM has 256 token limit anyway
+# switching back to words was cleaner
         while i < len(words_with_ts):
             window = words_with_ts[i : i + chunk_size]
             text = " ".join(w for w, _ in window)
