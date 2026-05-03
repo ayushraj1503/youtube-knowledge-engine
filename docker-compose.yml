@@ -1,0 +1,86 @@
+# docker-compose.yml — Full stack: Backend + Frontend + Volumes
+version: "3.9"
+
+services:
+  # ── Backend API ─────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    container_name: yk_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      # Persist ChromaDB and logs outside the container
+      - yk_chroma:/app/data/chroma_db
+      - yk_logs:/app/data/logs
+      - yk_cache:/app/data/cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - yk_network
+    deploy:
+      resources:
+        limits:
+          memory: 4G    # BLIP + sentence-transformers can use ~2-3GB
+          cpus: "4"
+
+  # ── Streamlit Frontend ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    container_name: yk_frontend
+    restart: unless-stopped
+    environment:
+      - BACKEND_URL=http://backend:8000
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - yk_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
+
+  # ── Optional: Nginx reverse proxy ──────────────────────────────────────────
+  # Uncomment for production with SSL termination
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: yk_nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./infrastructure/nginx/certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - backend
+  #     - frontend
+  #   networks:
+  #     - yk_network
+
+# ── Named volumes ────────────────────────────────────────────────────────────
+volumes:
+  yk_chroma:
+    driver: local
+  yk_logs:
+    driver: local
+  yk_cache:
+    driver: local
+
+# ── Network ──────────────────────────────────────────────────────────────────
+networks:
+  yk_network:
+    driver: bridge
