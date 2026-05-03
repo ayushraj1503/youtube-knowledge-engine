@@ -10,6 +10,28 @@
 
 ---
 
+## 👤 About This Project
+
+Built this to solve a real problem I faced — 
+watching 10+ hours of ML lecture videos and not 
+being able to find specific explanations later.
+
+Started with basic transcript search, realized 
+keyword search missed semantic meaning, added 
+vector embeddings. Then noticed exact terms like 
+"RLHF" weren't matching semantically so added BM25. 
+Kept iterating from there.
+
+**Biggest challenge:** YouTube's transcript API 
+changed between versions — had to debug the 
+new fetch() method vs old get_transcript().
+
+**What I learned:** The "lost in the middle" 
+problem in LLMs was surprising — moving the 
+best chunk to last position actually improved 
+answer quality noticeably.
+
+
 ## What It Does
 
 1. **Ingest** an entire YouTube channel (hundreds of videos)
